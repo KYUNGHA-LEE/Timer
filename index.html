@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>타이머 웹앱</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Malgun Gothic', '맑은 고딕', 'Apple SD Gothic Neo', sans-serif;
+      background-color: #f4f6f9;
+      color: #1e293b;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .timer-card {
+      background-color: #ffffff;
+      width: 100%;
+      max-width: 900px;
+      padding: 50px 30px;
+      border-radius: 32px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+      text-align: center;
+    }
+
+    .title {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      color: #334155;
+      margin-bottom: 10px;
+    }
+
+    .time-display {
+      font-size: clamp(5.5rem, 22vw, 15rem);
+      font-weight: 900;
+      line-height: 1.1;
+      margin: 20px 0;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -2px;
+      color: #0f172a;
+      transition: color 0.2s ease, transform 0.2s ease;
+    }
+
+    /* 마지막 10초 빨간색 강조 */
+    .time-display.urgent {
+      color: #ef4444;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.04); }
+    }
+
+    .status-msg {
+      min-height: 60px;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      color: #dc2626;
+      margin-bottom: 25px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .quick-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .btn-quick {
+      background-color: #e2e8f0;
+      color: #1e293b;
+      border: none;
+      padding: 14px 28px;
+      font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+      font-weight: 700;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: background-color 0.15s, transform 0.1s;
+    }
+
+    .btn-quick:hover {
+      background-color: #cbd5e1;
+    }
+
+    .btn-quick:active {
+      transform: scale(0.96);
+    }
+
+    .input-area {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 35px;
+      flex-wrap: wrap;
+    }
+
+    .input-area label {
+      font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+      font-weight: 700;
+      color: #475569;
+    }
+
+    .minute-input {
+      width: 110px;
+      padding: 12px 16px;
+      font-size: clamp(1.3rem, 3vw, 1.8rem);
+      font-weight: 700;
+      text-align: center;
+      border: 3px solid #cbd5e1;
+      border-radius: 14px;
+      outline: none;
+    }
+
+    .minute-input:focus {
+      border-color: #2563eb;
+    }
+
+    .btn-set {
+      background-color: #475569;
+      color: #ffffff;
+      border: none;
+      padding: 14px 24px;
+      font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+      font-weight: 700;
+      border-radius: 14px;
+      cursor: pointer;
+    }
+
+    .btn-set:hover {
+      background-color: #334155;
+    }
+
+    .control-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn-main {
+      border: none;
+      padding: 18px 42px;
+      font-size: clamp(1.3rem, 3.5vw, 2rem);
+      font-weight: 800;
+      border-radius: 20px;
+      cursor: pointer;
+      color: #ffffff;
+      min-width: 150px;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    .btn-main:hover {
+      opacity: 0.92;
+    }
+
+    .btn-main:active {
+      transform: scale(0.96);
+    }
+
+    .btn-start {
+      background-color: #2563eb;
+    }
+
+    .btn-pause {
+      background-color: #f59e0b;
+    }
+
+    .btn-reset {
+      background-color: #64748b;
+    }
+
+    @media (max-width: 600px) {
+      .timer-card {
+        padding: 30px 20px;
+      }
+      .btn-main {
+        width: 100%;
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="timer-card">
+    <h1 class="title">집중 타이머</h1>
+
+    <!-- 남은 시간 표시 -->
+    <div id="timeDisplay" class="time-display">05:00</div>
+
+    <!-- 종료 문구 표시 -->
+    <div id="statusMsg" class="status-msg"></div>
+
+    <!-- 빠른 선택 버튼 -->
+    <div class="quick-buttons">
+      <button type="button" class="btn-quick" onclick="selectQuickMinutes(5)">5분</button>
+      <button type="button" class="btn-quick" onclick="selectQuickMinutes(10)">10분</button>
+      <button type="button" class="btn-quick" onclick="selectQuickMinutes(15)">15분</button>
+    </div>
+
+    <!-- 분 직접 입력창 -->
+    <div class="input-area">
+      <label for="minuteInput">분 설정:</label>
+      <input type="number" id="minuteInput" class="minute-input" min="1" max="999" value="5">
+      <button type="button" class="btn-set" onclick="applyCustomMinutes()">적용</button>
+    </div>
+
+    <!-- 시작 / 일시정지 / 초기화 버튼 -->
+    <div class="control-buttons">
+      <button type="button" class="btn-main btn-start" onclick="startTimer()">시작</button>
+      <button type="button" class="btn-main btn-pause" onclick="pauseTimer()">일시정지</button>
+      <button type="button" class="btn-main btn-reset" onclick="resetTimer()">초기화</button>
+    </div>
+  </div>
+
+  <script>
+    let defaultSeconds = 5 * 60;
+    let remainingSeconds = defaultSeconds;
+    let timerId = null;
+    let isRunning = false;
+    let audioCtx = null;
+
+    const timeDisplay = document.getElementById('timeDisplay');
+    const statusMsg = document.getElementById('statusMsg');
+    const minuteInput = document.getElementById('minuteInput');
+
+    // 브라우저 내장 오디오 초기화 (외부 파일 없이 알림음 재생)
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          audioCtx = new AudioContextClass();
+        }
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    // 종료 알림음 재생 함수
+    function playAlarmSound() {
+      try {
+        initAudio();
+        if (!audioCtx) return;
+
+        const notes = [880, 1046.5, 880, 1046.5, 1318.5];
+        notes.forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.22);
+
+          gain.gain.setValueAtTime(0.3, audioCtx.currentTime + idx * 0.22);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + idx * 0.22 + 0.2);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc.start(audioCtx.currentTime + idx * 0.22);
+          osc.stop(audioCtx.currentTime + idx * 0.22 + 0.2);
+        });
+      } catch (e) {
+        console.error('알림음 재생 오류:', e);
+      }
+    }
+
+    // 화면 업데이트
+    function updateScreen() {
+      const mins = Math.floor(remainingSeconds / 60);
+      const secs = remainingSeconds % 60;
+      timeDisplay.textContent =
+        String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+
+      // 마지막 10초 이하일 때 빨간색 글씨로 변경 (0초 포함)
+      if (remainingSeconds <= 10 && remainingSeconds > 0) {
+        timeDisplay.classList.add('urgent');
+      } else if (remainingSeconds === 0) {
+        timeDisplay.classList.add('urgent');
+      } else {
+        timeDisplay.classList.remove('urgent');
+      }
+    }
+
+    // 시작 버튼
+    function startTimer() {
+      initAudio();
+      if (isRunning) return;
+
+      // 만약 0초 상태에서 시작을 누르면 설정된 시간으로 다시 세팅
+      if (remainingSeconds <= 0) {
+        remainingSeconds = defaultSeconds;
+      }
+
+      statusMsg.textContent = '';
+      isRunning = true;
+      updateScreen();
+
+      timerId = setInterval(() => {
+        if (remainingSeconds > 0) {
+          remainingSeconds--;
+          updateScreen();
+
+          if (remainingSeconds === 0) {
+            clearInterval(timerId);
+            isRunning = false;
+            statusMsg.textContent = '시간 종료!';
+            playAlarmSound();
+          }
+        }
+      }, 1000);
+    }
+
+    // 일시정지 버튼
+    function pauseTimer() {
+      if (!isRunning) return;
+      clearInterval(timerId);
+      isRunning = false;
+    }
+
+    // 초기화 버튼
+    function resetTimer() {
+      clearInterval(timerId);
+      isRunning = false;
+      remainingSeconds = defaultSeconds;
+      statusMsg.textContent = '';
+      timeDisplay.classList.remove('urgent');
+      updateScreen();
+    }
+
+    // 빠른 선택 버튼 (5분, 10분, 15분)
+    function selectQuickMinutes(mins) {
+      minuteInput.value = mins;
+      defaultSeconds = mins * 60;
+      resetTimer();
+    }
+
+    // 분 입력창 적용
+    function applyCustomMinutes() {
+      const mins = parseInt(minuteInput.value, 10);
+      if (isNaN(mins) || mins < 1) {
+        alert('1분 이상의 숫자를 입력해 주세요.');
+        minuteInput.value = 5;
+        return;
+      }
+      defaultSeconds = mins * 60;
+      resetTimer();
+    }
+
+    // 엔터키로도 분 입력 적용 가능하게 처리
+    minuteInput.addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        applyCustomMinutes();
+      }
+    });
+
+    // 초기 화면 표시
+    updateScreen();
+  </script>
+</body>
+</html>
